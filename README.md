@@ -1,4 +1,4 @@
-# Alertness monitor
+# Alertness Monitor
 
 <table>
   <tr>
