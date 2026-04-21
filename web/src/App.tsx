@@ -226,7 +226,7 @@ export default function App() {
     <div className="app">
       <h1>Alertness monitor</h1>
       <p className="sub">
-        Live webcam: frames are sent to <code>/v1/detect</code> about every{" "}
+        Live webcam: frames are sent to the server about every{" "}
         {INFERENCE_INTERVAL_MS} ms while the camera runs.
       </p>
 
