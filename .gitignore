@@ -1,0 +1,25 @@
+# Virtual environments (pip installs packages here)
+.venv/
+venv/
+env/
+ENV/
+yolo/
+
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local / editable installs and packaging
+*.egg-info/
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# YOLOv5 dataset label caches (regenerated when training loads the dataset)
+**/labels.cache
+**/labels.cache.npy
