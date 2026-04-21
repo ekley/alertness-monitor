@@ -1,5 +1,8 @@
 # Alertness monitor
 
+<img width="973" height="937" alt="image" src="https://github.com/user-attachments/assets/2d98a975-7d21-4e1e-9953-a0e6c551985e" />
+
+
 This project uses [YOLOv5](https://github.com/ultralytics/yolov5) for object detection training and a Jupyter notebook (`main.ipynb`) for experimentation.
 
 ## What you need
