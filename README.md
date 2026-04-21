@@ -1,0 +1,69 @@
+# Alertness monitor
+
+This project uses [YOLOv5](https://github.com/ultralytics/yolov5) for object detection training and a Jupyter notebook (`main.ipynb`) for experimentation.
+
+## What you need
+
+- Python 3.x and `pip`
+- A NVIDIA GPU with CUDA (optional but recommended for training)
+- Your images and YOLO-format labels under the `data` folder (see below)
+
+## 1. Clone YOLOv5
+
+From the **repository root** (this folder), add the official YOLOv5 code:
+
+```bash
+git clone https://github.com/ultralytics/yolov5.git
+```
+
+You should end up with a `yolov5` directory next to `main.ipynb`, `dataset.yml`, and `data`.
+
+## 2. Put `dataset.yml` inside `yolov5`
+
+This repo keeps **`dataset.yml` in the project root** as the canonical copy. Training is run from inside `yolov5` with `--data dataset.yml`, so YOLOv5 must find that file next to `train.py`.
+
+**After cloning `yolov5`, copy the root `dataset.yml` into the `yolov5` folder** (overwrite if an old file exists):
+
+- From: `dataset.yml` (repository root)
+- To: `yolov5/dataset.yml`
+
+On Windows (PowerShell) from the repo root:
+
+```powershell
+Copy-Item -Path .\dataset.yml -Destination .\yolov5\dataset.yml -Force
+```
+
+The bundled `dataset.yml` sets `path: ../data` so that, when resolved from `yolov5/`, your dataset lives in the repo’s `data` directory. If you move files or change layout, edit `yolov5/dataset.yml` accordingly.
+
+## 3. Python environment and dependencies
+
+Create a virtual environment (recommended), activate it, then install YOLOv5’s requirements:
+
+```bash
+cd yolov5
+pip install -r requirements.txt
+```
+
+Install PyTorch for your platform from [PyTorch’s install page](https://pytorch.org/get-started/locally/) if you need a specific CUDA build.
+
+## 4. Dataset layout
+
+Match what `dataset.yml` expects. With the provided file, the dataset root is `../data` relative to `yolov5`, i.e. the repo’s `data` folder. Under that, `train` and `val` point at `images` (adjust in `dataset.yml` if your folders differ).
+
+## 5. Train
+
+From the `yolov5` directory:
+
+```bash
+python train.py --img 320 --batch 16 --epochs 500 --data dataset.yml --weights yolov5s.pt --workers 2
+```
+
+Weights and logs are written under `yolov5/runs/train/` by default.
+
+## 6. Notebook
+
+Open `main.ipynb` in Jupyter or VS Code. Use the same Python environment where you installed the dependencies so imports match your training setup.
+
+---
+
+If you skip copying `dataset.yml` into `yolov5`, `train.py` will not find `--data dataset.yml` when you run commands from `yolov5` unless you pass a different path explicitly.
