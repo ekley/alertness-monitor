@@ -20,6 +20,7 @@ def _allow_windows_paths_on_linux() -> None:
 
 _allow_windows_paths_on_linux()
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 
 WEIGHTS = os.environ.get("WEIGHTS", "/weights/best.pt")
@@ -40,6 +41,18 @@ def _default_yolov5_root() -> str:
 YOLOV5_ROOT = _default_yolov5_root()
 
 app = FastAPI(title="Alertness monitor", version="1.0.0")
+
+_cors = os.environ.get(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173",
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o.strip() for o in _cors.split(",") if o.strip()],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 _model: Optional[Any] = None
 
 
