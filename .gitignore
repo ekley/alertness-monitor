@@ -23,6 +23,7 @@ pip-wheel-metadata/
 # Frontend
 web/node_modules/
 web/dist/
+web/.env
 
 # YOLOv5 dataset label caches (regenerated when training loads the dataset)
 **/labels.cache
