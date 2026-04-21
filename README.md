@@ -110,3 +110,17 @@ docker run --rm --gpus all -p 8000:8000 -e DEVICE=0 -v "$(pwd)/yolov5/runs/train
 Optional env: `WEIGHTS` (default `/weights/best.pt`), `DEVICE` (`cpu` or `0`), `IMGSZ` (default **320** to match typical training here). For local runs without Docker, ensure a `yolov5` folder exists next to `api/` or set `YOLOV5_ROOT`.
 
 If you trained on **Windows** and serve in **Linux/Docker**, the API applies a small `pathlib` compatibility shim so `torch.load` can read checkpoints that contain `WindowsPath` objects.
+
+## Web UI (React)
+
+The `web/` app (Vite + React + TypeScript) talks to the same API. In dev, Vite **proxies** `/health` and `/v1` to `http://localhost:8000`, so start the API first, then:
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Open **http://localhost:5173** — **Start live camera** streams the webcam: the UI draws video continuously and sends JPEG frames to `/v1/detect` on a timer (~5/s by default), overlaying boxes from the latest response.
+
+If the API is on another host/port, add `web/.env` with `VITE_API_BASE=http://127.0.0.1:8000` (no trailing slash) and set the API’s **`CORS_ORIGINS`** env to include your frontend origin (comma-separated). Rebuild the API Docker image after pulling changes so CORS is enabled.
