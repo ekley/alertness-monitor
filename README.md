@@ -10,11 +10,64 @@
 
 This project uses [YOLOv5](https://github.com/ultralytics/yolov5) for object detection training and a Jupyter notebook (`main.ipynb`) for experimentation.
 
-## What you need
+## Requirements
 
-- Python 3.x and `pip`
-- A NVIDIA GPU with CUDA (optional but recommended for training)
-- Your images and YOLO-format labels under the `data` folder (see below)
+Install these from your OS package manager or official installers before running the project:
+
+- Python **3.10+** (3.10 or 3.11 recommended) and `pip`
+- Git
+- Docker Desktop / Docker Engine (required for API container build and run)
+- `make` (optional but recommended; used by root `Makefile`)
+- Node.js **20+** (or Bun **1.0+**) for the `web/` frontend
+- A NVIDIA GPU + CUDA drivers (optional, recommended for training and GPU inference)
+- Your images and YOLO-format labels under the `data` folder (see dataset section)
+
+If `make` is not available on Windows PowerShell, use `docker_cmd.ps1` from the repo root for Docker build/run commands.
+
+## Makefile commands (from repo root)
+
+The root `Makefile` has helpers for Docker and local dev.
+You can run the project in two ways:
+
+### Option 1: Local development (no Docker for API)
+
+Use your local Python environment for the API and run the frontend dev server:
+
+```bash
+make server_dev   # FastAPI on http://localhost:8000
+make web_dev      # React app on http://localhost:5173
+```
+
+### Option 2: Docker API + local frontend
+
+Build and run the API in Docker (containers run in background with `-d`), then start the frontend:
+
+```bash
+# Build image
+make docker_build_cpu
+# or: make docker_build_gpu
+
+# Run API container (WEIGHTS is required)
+make docker_run_cpu WEIGHTS=yolov5/runs/train/exp2/weights/best.pt
+# or: make docker_run_gpu WEIGHTS=yolov5/runs/train/exp2/weights/best.pt
+
+# Start frontend
+make web_dev
+```
+
+Optional Docker run arguments:
+
+```bash
+make docker_run_cpu WEIGHTS=... PORT=8001
+# or make docker_run_gpu WEIGHTS=... PORT=8001 WEIGHTS_ENV=/weights/best.pt
+```
+
+Notes:
+
+- `WEIGHTS` is required for `docker_run_cpu` and `docker_run_gpu`.
+- Relative `WEIGHTS` paths are converted to absolute paths in the Makefile.
+- Containers are started detached (`-d`) and removed on stop (`--rm`).
+- To inspect/stop running containers: `docker ps`, then `docker stop <container_id>`.
 
 ## 1. Clone YOLOv5
 
@@ -103,13 +156,41 @@ Run — mount your latest `best.pt` (current training run is under `exp2`):
 docker run --rm -p 8000:8000 -v "$(pwd)/yolov5/runs/train/exp2/weights/best.pt:/weights/best.pt:ro" alertness-api:cpu
 ```
 
-On Windows PowerShell, use a full path or `docker_build.py run cpu -w yolov5/runs/train/exp2/weights/best.pt`. If you train again, the run folder may become `exp3`, etc.—point `-w` at that run’s `weights/best.pt`.
+If you use the root `Makefile`, run:
+
+```bash
+make docker_build_cpu
+make docker_run_cpu WEIGHTS=yolov5/runs/train/exp2/weights/best.pt
+```
+
+On Windows PowerShell without `make`, use:
+
+```powershell
+.\docker_cmd.ps1 build-cpu
+.\docker_cmd.ps1 run-cpu -Weights "yolov5/runs/train/exp2/weights/best.pt"
+```
+
+If you train again, the run folder may become `exp3`, etc. Point `WEIGHTS` / `-Weights` to that run’s `weights/best.pt`.
 
 **GPU:** build the CUDA wheel variant, pass the GPU, and set `DEVICE=0`:
 
 ```bash
 docker build -f docker/Dockerfile.gpu -t alertness-api:gpu .
 docker run --rm --gpus all -p 8000:8000 -e DEVICE=0 -v "$(pwd)/yolov5/runs/train/exp2/weights/best.pt:/weights/best.pt:ro" alertness-api:gpu
+```
+
+Or via `Makefile`:
+
+```bash
+make docker_build_gpu
+make docker_run_gpu WEIGHTS=yolov5/runs/train/exp2/weights/best.pt
+```
+
+Or on PowerShell without `make`:
+
+```powershell
+.\docker_cmd.ps1 build-gpu
+.\docker_cmd.ps1 run-gpu -Weights "yolov5/runs/train/exp2/weights/best.pt"
 ```
 
 - `GET /health` — liveness and config.
