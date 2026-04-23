@@ -17,7 +17,7 @@ Install these from your OS package manager or official installers before running
 - Python **3.10+** (3.10 or 3.11 recommended) and `pip`
 - Git
 - Docker Desktop / Docker Engine (required for API container build and run)
-- `make` (optional but recommended; used by root `Makefile`)
+- `make` (optional but recommended, used by root `Makefile`)
 - Node.js **20+** (or Bun **1.0+**) for the `web/` frontend
 - A NVIDIA GPU + CUDA drivers (optional, recommended for training and GPU inference)
 - Your images and YOLO-format labels under the `data` folder (see dataset section)
@@ -88,12 +88,6 @@ This repo keeps **`dataset.yml` in the project root** as the canonical copy. Tra
 - From: `dataset.yml` (repository root)
 - To: `yolov5/dataset.yml`
 
-On Windows (PowerShell) from the repo root:
-
-```powershell
-Copy-Item -Path .\dataset.yml -Destination .\yolov5\dataset.yml -Force
-```
-
 The bundled `dataset.yml` sets `path: ../data` so that, when resolved from `yolov5/`, your dataset lives in the repo’s `data` directory. If you move files or change layout, edit `yolov5/dataset.yml` accordingly.
 
 ## 3. Python environment and dependencies
@@ -105,13 +99,22 @@ cd yolov5
 pip install -r requirements.txt
 ```
 
+## 4. Clone LabelImg
+
+Use LabelImg if you want to create or edit bounding-box annotations for your dataset.
+
+```bash
+git clone https://github.com/HumanSignal/labelImg.git
+```
+
+
 Install PyTorch for your platform from [PyTorch’s install page](https://pytorch.org/get-started/locally/) if you need a specific CUDA build.
 
-## 4. Dataset layout
+## 5. Dataset layout
 
 Match what `dataset.yml` expects. With the provided file, the dataset root is `../data` relative to `yolov5`, i.e. the repo’s `data` folder. Under that, `train` and `val` point at `images` (adjust in `dataset.yml` if your folders differ).
 
-## 5. Train
+## 6. Train
 
 From the `yolov5` directory:
 
@@ -121,7 +124,7 @@ python train.py --img 320 --batch 16 --epochs 500 --data dataset.yml --weights y
 
 Weights and logs are written under `yolov5/runs/train/` by default.
 
-## 6. Notebook
+## 7. Notebook
 
 Open `main.ipynb` in Jupyter or VS Code. Use the same Python environment where you installed the dependencies so imports match your training setup.
 
