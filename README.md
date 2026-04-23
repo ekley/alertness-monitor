@@ -142,3 +142,17 @@ Notes:
 Open **http://localhost:5173** — **Start live camera** streams the webcam: the UI draws video continuously and sends JPEG frames to `/v1/detect` on a timer (~5/s by default), overlaying boxes from the latest response.
 
 If the API is on another host/port, add `web/.env` with `VITE_API_BASE=http://127.0.0.1:8000` (no trailing slash) and set the API’s **`CORS_ORIGINS`** env to include your frontend origin (comma-separated). Rebuild the API Docker image after pulling changes so CORS is enabled.
+
+### Notebook cleanup before commit
+
+Clear notebook outputs before committing:
+
+```bash
+python -m nbconvert --clear-output --inplace .\main.ipynb
+```
+
+If this fails because `nbconvert` is missing, install it first:
+
+```bash
+python -m pip install nbconvert
+```
