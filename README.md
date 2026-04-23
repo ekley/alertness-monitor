@@ -8,150 +8,144 @@
 </table>
 
 
-This project uses [YOLOv5](https://github.com/ultralytics/yolov5) for object detection training and a Jupyter notebook (`main.ipynb`) for experimentation.
+Real-time drowsiness detection system built with YOLO-based image processing.  
+The project includes:
+
+- model training workflow with [YOLOv5](https://github.com/ultralytics/yolov5)
+- FastAPI inference service (`api/`)
+- React frontend for live webcam detection (`web/`)
+- Docker CPU/GPU deployment options
 
 ## Requirements
 
-Install these from your OS package manager or official installers before running the project:
+Install these before running the project:
 
-- Python **3.10+** (3.10 or 3.11 recommended) and `pip`
+- Python **3.10+** (3.10/3.11 recommended) + `pip`
 - Git
-- Docker Desktop / Docker Engine (required for API container build and run)
-- `make` (optional but recommended, used by root `Makefile`)
-- Node.js **20+** (or Bun **1.0+**) for the `web/` frontend
-- A NVIDIA GPU + CUDA drivers (optional, recommended for training and GPU inference)
-- Your images and YOLO-format labels under the `data` folder (see dataset section)
+- Docker Desktop / Docker Engine
+- `make` (recommended for root `Makefile` commands)
+- Node.js **20+** or Bun **1.0+** (frontend)
+- NVIDIA GPU + CUDA drivers (optional; recommended for training/GPU inference)
 
-## 1. Clone YOLOv5
 
-From the **repository root** (this folder), add the official YOLOv5 code:
+## Quick start (run the app)
+
+From the repository root, pick one setup:
+
+### Option A: Local API + local frontend
+
+```bash
+make server_dev   # API: http://localhost:8000
+make web_dev      # Web: http://localhost:5173
+```
+
+### Option B: Docker API + local frontend
+
+```bash
+# Build API image
+make docker_build_cpu
+# or: make docker_build_gpu
+
+# Run API container in background (-d)
+make docker_run_cpu WEIGHTS=yolov5/runs/train/exp2/weights/best.pt
+# or: make docker_run_gpu WEIGHTS=yolov5/runs/train/exp2/weights/best.pt
+
+# Start web app
+make web_dev
+```
+
+Optional Docker run args:
+
+```bash
+make docker_run_cpu WEIGHTS=... PORT=8001
+make docker_run_gpu WEIGHTS=... PORT=8001 WEIGHTS_ENV=/weights/best.pt
+```
+
+Notes:
+
+- `WEIGHTS` is required for `docker_run_cpu` and `docker_run_gpu`.
+- Containers are started detached (`-d`) and auto-removed on stop (`--rm`).
+- Check/stop containers with `docker ps` and `docker stop <container_id>`.
+
+## Frontend behavior
+
+Open [http://localhost:5173](http://localhost:5173).  
+`Start live camera` streams webcam frames to `/v1/detect` (about 5 requests/sec) and overlays bounding boxes from API responses.
+
+If API runs on a different host/port:
+
+- set `web/.env`: `VITE_API_BASE=http://127.0.0.1:8000` (no trailing slash)
+- set API `CORS_ORIGINS` to include frontend origin(s)
+
+## API endpoints
+
+- `GET /health` - liveness and runtime config
+- `POST /v1/detect` - multipart image upload (`image` field)
+
+## Training pipeline
+
+## 1) Clone YOLOv5
 
 ```bash
 git clone https://github.com/ultralytics/yolov5.git
 ```
 
-You should end up with a `yolov5` directory next to `main.ipynb`, `dataset.yml`, and `data`.
+Expected layout: `yolov5/` next to `main.ipynb`, `dataset.yml`, and `data/`.
 
-## 2. Put `dataset.yml` inside `yolov5`
+## 2) Copy `dataset.yml` into `yolov5`
 
-This repo keeps **`dataset.yml` in the project root** as the canonical copy. Training is run from inside `yolov5` with `--data dataset.yml`, so YOLOv5 must find that file next to `train.py`.
+Training is run from inside `yolov5` with `--data dataset.yml`, so `dataset.yml` must exist in `yolov5/`.
 
-**After cloning `yolov5`, copy the root `dataset.yml` into the `yolov5` folder** (overwrite if an old file exists):
+- from: `dataset.yml` (repo root)
+- to: `yolov5/dataset.yml`
 
-- From: `dataset.yml` (repository root)
-- To: `yolov5/dataset.yml`
+The provided file uses `path: ../data`, so dataset files should live in repo `data/`.
 
-The bundled `dataset.yml` sets `path: ../data` so that, when resolved from `yolov5/`, your dataset lives in the repo’s `data` directory. If you move files or change layout, edit `yolov5/dataset.yml` accordingly.
-
-## 3. Python environment and dependencies
-
-Create a virtual environment (recommended), activate it, then install YOLOv5’s requirements:
+## 3) Install dependencies
 
 ```bash
 cd yolov5
 pip install -r requirements.txt
 ```
 
-## 4. Clone LabelImg
+Install matching PyTorch build from [PyTorch install guide](https://pytorch.org/get-started/locally/) if needed.
 
-Use LabelImg if you want to create or edit bounding-box annotations for your dataset.
+## 4) (Optional) Clone LabelImg for annotation
+
+Use LabelImg to create/edit bounding-box labels:
 
 ```bash
 git clone https://github.com/HumanSignal/labelImg.git
 ```
 
+## 5) Train
 
-Install PyTorch for your platform from [PyTorch’s install page](https://pytorch.org/get-started/locally/) if you need a specific CUDA build.
-
-## 5. Dataset layout
-
-Match what `dataset.yml` expects. With the provided file, the dataset root is `../data` relative to `yolov5`, i.e. the repo’s `data` folder. Under that, `train` and `val` point at `images` (adjust in `dataset.yml` if your folders differ).
-
-## 6. Train
-
-From the `yolov5` directory:
+From `yolov5/`:
 
 ```bash
 python train.py --img 320 --batch 16 --epochs 500 --data dataset.yml --weights yolov5s.pt --workers 2
 ```
 
-Weights and logs are written under `yolov5/runs/train/` by default.
+Outputs are saved under `yolov5/runs/train/`.
 
-## 7. Notebook
+## 6) Notebook workflow
 
-Open `main.ipynb` in Jupyter or VS Code. Use the same Python environment where you installed the dependencies so imports match your training setup.
+Open `main.ipynb` in Jupyter or VS Code, using the same Python environment as training.
 
----
+## GPU guidance
 
-If you skip copying `dataset.yml` into `yolov5`, `train.py` will not find `--data dataset.yml` when you run commands from `yolov5` unless you pass a different path explicitly.
+- Training: GPU is strongly recommended.
+- Inference: CPU works, but GPU improves latency/throughput.
 
-## GPU: training vs inference
+Use CPU image for simple deployment; switch to GPU image (`--gpus all`) for higher throughput.
 
-| Stage | GPU required? | Notes |
-|--------|----------------|--------|
-| **Training** | Strongly recommended | YOLO training on CPU is possible but usually impractical (very slow). |
-| **Inference** (running the trained model) | **No** | PyTorch will run on **CPU**; latency and throughput are lower than on a GPU. Use a **GPU on the server** if you need high FPS, many concurrent clients, or large input sizes. |
-
-So: you can **ship a CPU-only Docker image** and serve the current model; add a **GPU image** (or `--gpus`) when you need faster inference.
-
-## Makefile commands (from repo root)
-
-The root `Makefile` has helpers for Docker and local dev.
-You can run the project in two ways:
-
-### Option 1: Local development (no Docker for API)
-
-Use your local Python environment for the API and run the frontend dev server:
-
-```bash
-make server_dev   # FastAPI on http://localhost:8000
-make web_dev      # React app on http://localhost:5173
-```
-
-### Option 2: Docker API + local frontend
-
-Build and run the API in Docker (containers run in background with `-d`), then start the frontend:
-
-```bash
-# Build image
-make docker_build_cpu
-# or: make docker_build_gpu
-
-# Run API container (WEIGHTS is required)
-make docker_run_cpu WEIGHTS=yolov5/runs/train/exp2/weights/best.pt
-# or: make docker_run_gpu WEIGHTS=yolov5/runs/train/exp2/weights/best.pt
-
-# Start frontend
-make web_dev
-```
-
-Optional Docker run arguments:
-
-```bash
-make docker_run_cpu WEIGHTS=... PORT=8001
-# or make docker_run_gpu WEIGHTS=... PORT=8001 WEIGHTS_ENV=/weights/best.pt
-```
-
-Notes:
-
-- `WEIGHTS` is required for `docker_run_cpu` and `docker_run_gpu`.
-- Relative `WEIGHTS` paths are converted to absolute paths in the Makefile.
-- Containers are started detached (`-d`) and removed on stop (`--rm`).
-- To inspect/stop running containers: `docker ps`, then `docker stop <container_id>`.
-
-Open **http://localhost:5173** — **Start live camera** streams the webcam: the UI draws video continuously and sends JPEG frames to `/v1/detect` on a timer (~5/s by default), overlaying boxes from the latest response.
-
-If the API is on another host/port, add `web/.env` with `VITE_API_BASE=http://127.0.0.1:8000` (no trailing slash) and set the API’s **`CORS_ORIGINS`** env to include your frontend origin (comma-separated). Rebuild the API Docker image after pulling changes so CORS is enabled.
-
-### Notebook cleanup before commit
-
-Clear notebook outputs before committing:
+## Notebook cleanup before commit
 
 ```bash
 python -m nbconvert --clear-output --inplace .\main.ipynb
 ```
 
-If this fails because `nbconvert` is missing, install it first:
+If `nbconvert` is missing:
 
 ```bash
 python -m pip install nbconvert
